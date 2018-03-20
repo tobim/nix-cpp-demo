@@ -11,24 +11,21 @@ let
   tb = builtins.fetchTarball
     https://github.com/NixOS/nixpkgs/archive/18.03-beta.tar.gz;
 
-  pkgs_ = import tb { };
-
-  stdenv_ = if builtins.match "clang.*" "${compiler}" == null then pkgs_.stdenv else pkgs_.clangStdenv;
-  stdenv = pkgs_.overrideCC stdenv_ pkgs_.${compiler};
-
-  #cpp_overlay = import (../nixpkgs-c++) { inherit stdenv; };
+  #cpp_overlay = import (../nixpkgs-c++);
   cpp_overlay = import (builtins.fetchTarball
-    https://github.com/tobimpub/nixpkgs-cpp/archive/master.tar.gz) { inherit stdenv; };
+    https://github.com/tobimpub/nixpkgs-cpp/archive/master.tar.gz);
 
-  pkgs = import tb {
+  nixpkgs = import tb {
     config = {};
     overlays = [ cpp_overlay ];
   };
 
-in with pkgs; {
+  cppPkgs = nixpkgs."${compiler}pkgs";
+
+in with cppPkgs; {
   nix_cpp_demo = stdenv.mkDerivation {
     name = "nix-c++-demo";
-    nativeBuildInputs = [ cmake ];
+    nativeBuildInputs = [ nixpkgs.cmake ];
     buildInputs = [ range-v3 MPark_Variant platform ];
     LANG = "en_US.UTF-8";
   };
